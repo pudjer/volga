@@ -1,0 +1,30 @@
+version: "3"
+networks:
+   mynetwork:
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?error}
+      POSTGRES_USER: ${POSTGRES_USER:?error}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?error}
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - type: bind
+        source: ./pgvolume
+        target: /var/lib/postgresql/data/pgdata
+    networks:
+      - mynetwork
+  app:
+    build: .
+    restart: always
+    ports:
+      - ${PORT}:80
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?error}
+      POSTGRES_USER: ${POSTGRES_USER:?error}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?error}
+      SECRET_KEY: ${SECRET_KEY:?error}
+    networks:
+      - mynetwork
+
