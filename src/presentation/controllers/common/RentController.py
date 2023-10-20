@@ -8,9 +8,6 @@ rent_router = APIRouter()
 async def GetAllAwailableTransport():
     return {'username': 'str', 'password': 'str'}
 
-@rent_router.get('{rentId}')
-async def GetRent():
-    return {'username': 'str', 'password': 'str'}
 
 @rent_router.get('/MyHistory')
 async def GetMyHistory():
@@ -28,6 +25,9 @@ async def RentTransport():
 async def EndRent():
     return 'me'
 
+@rent_router.get('/{rentId}')
+async def GetRent():
+    return {'username': 'str', 'password': 'str'}
 
 
 

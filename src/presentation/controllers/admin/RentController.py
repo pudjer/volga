@@ -5,10 +5,6 @@ from app import app
 rent_router = APIRouter()
 
 
-@rent_router.get('{rentId}')
-async def GetRent():
-    return {'username': 'str', 'password': 'str'}
-
 @rent_router.get('/UserHistory/{userId}')
 async def GetUserHistory():
     return {'username': 'str', 'password': 'str'}
@@ -33,6 +29,10 @@ async def UpdateRent():
 @rent_router.delete('/{id}')
 async def DeleteRent():
     return 'me'
+
+@rent_router.get('/{rentId}')
+async def GetRent():
+    return {'username': 'str', 'password': 'str'}
 
 
 

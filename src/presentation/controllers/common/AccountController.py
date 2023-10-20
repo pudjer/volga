@@ -6,7 +6,7 @@ account_router = APIRouter()
 
 @account_router.get('/Me')
 async def GetMe():
-    return {'username': 'str', 'password': 'str'}
+    return 'me'
 
 @account_router.post('/SignIn')
 async def SignIn():
