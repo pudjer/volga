@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from app import app
 
+payment_router = APIRouter()
 
-@app.post('/Payment/Hesoyam/{accountId}')
+@payment_router.post('/Hesoyam/{accountId}/')
 async def Hesoyam():
     return 'me'

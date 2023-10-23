@@ -1,3 +1,5 @@
 #.env
 pgvolume
 .venv
+.vscode
+**/__pycache__/
