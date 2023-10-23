@@ -28,6 +28,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?error}
       POSTGRES_HOST: postgres
       SECRET_KEY: ${SECRET_KEY:?error}
+      EXPIRATION_TIME: ${EXPIRATION_TIME:?error}
     networks:
       - mynetwork
 

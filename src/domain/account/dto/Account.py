@@ -17,7 +17,7 @@ class AccountDto(BaseModel):
     isAdmin: bool 
     balance: float
     hashedPassword: str
-    validSince: str | None
+    validSince: int | None
 
 class AccountUpdateDto(BaseModel):
     username: Optional[str]

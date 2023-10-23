@@ -1,6 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.exc import IntegrityError
 
 from ....domain.authentication.models.Token import Token
 from ....domain.account.repositories.AccountRepository import ChangeAttrsById, Create, GetById, InvalidateById, Validate
@@ -14,7 +15,7 @@ account_router = APIRouter()
 @account_router.get('/Me/')
 async def GetMe(account: AccountDto = Depends(decode_jwt_token), db: Session = Depends(get_db)):
     res = AccountPublicDto(**(await GetById(db, account.id)).__dict__)
-    return account
+    return res
 
 @account_router.post('/SignIn/')
 async def SignIn(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(get_db)):
@@ -28,7 +29,7 @@ async def SignUp(credentials: Credentials, db: Session = Depends(get_db)):
 @account_router.put('/Update/')
 async def Update(credentials: AccountUpdateDto, account: AccountDto = Depends(decode_jwt_token), db: Session = Depends(get_db)):
     res = AccountPublicDto(**(await ChangeAttrsById(db, account.id, credentials)).__dict__)
-    return 'me'
+    return res
 
 @account_router.post('/SignOut/')
 async def SignOut(account: AccountDto = Depends(decode_jwt_token), db: Session = Depends(get_db)):
