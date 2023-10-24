@@ -5,9 +5,6 @@ from .presentation.controllers.common import *
 from .presentation.controllers.admin import *
 app = FastAPI()
 
-@app.get('/')
-def hello():
-    return 'sdfads'
 
 Base.metadata.create_all(bind=engine)
 

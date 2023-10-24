@@ -1,4 +1,4 @@
-
+from pydantic import BaseModel
 from dataclasses import dataclass
 from enum import Enum
 
@@ -8,8 +8,7 @@ class TransportType(str, Enum):
     Scooter: 'Scooter'
 
 
-@dataclass
-class Transport:
+class Transport(BaseModel):
     id: int
     canBeRented: bool
     model: str
@@ -20,4 +19,4 @@ class Transport:
     longitude: float
     minutePrice: float | None
     dayPrice: float | None
-    type: TransportType
+    transportType: TransportType

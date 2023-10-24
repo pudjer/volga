@@ -1,11 +1,9 @@
+from pydantic import BaseModel
 
-from dataclasses import dataclass
-
-
-@dataclass
-class Account:
+class Account(BaseModel):
     id: int
     username: str
-    hashedPassword: str
     isAdmin: bool 
     balance: float
+    hashedPassword: str
+    validSince: int | None
