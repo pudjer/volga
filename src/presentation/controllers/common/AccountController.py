@@ -2,15 +2,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
-
-from ....domain.account.models.Account import Account
-from ....domain.authentication.models.Token import Token
-from ....domain.account.repositories.AccountService import ChangeAttrsById, Create, GetById, InvalidateById, Validate
+from ...dto.Token import Token
+from ....domain.account.service.AccountService import ChangeAttrsById, Create, GetById, InvalidateById, Validate
 from ....domain.authentication.service import create_jwt_token, decode_jwt_token
 from ....infrastructure.persistence.database import get_db
-from ....domain.account.dto.Account import AccountPublicDto, AccountUpdateDto, Credentials
+from ....domain.account.dto.Account import *
 from sqlalchemy.orm import Session
-from ....domain.account.repositories.AccountErrors import *
+from ....domain.account.service.AccountErrors import *
 
 account_router = APIRouter()
 
@@ -19,7 +17,7 @@ class ErrorResponse(BaseModel):
 
 @account_router.get('/Me/', response_model=AccountPublicDto, responses={401: {"model": ErrorResponse}})
 async def GetMe(
-    account: Account = Depends(decode_jwt_token),
+    account: AccountDTO = Depends(decode_jwt_token),
     db: Session = Depends(get_db)
     ):
     res = AccountPublicDto(**(await GetById(db, account.id)).__dict__)
@@ -51,18 +49,18 @@ async def SignUp(
 @account_router.put('/Update/', response_model=AccountPublicDto, responses={400: {"model": ErrorResponse}})
 async def Update(
     credentials: AccountUpdateDto,
-    account: Account = Depends(decode_jwt_token),
+    account: AccountDTO = Depends(decode_jwt_token),
     db: Session = Depends(get_db)
     ):
     try: 
         res = AccountPublicDto(**(await ChangeAttrsById(db, account.id, credentials)).__dict__)
-    except IncorectPasswordError:
+    except UserNameUniqueError:
         raise HTTPException(status_code=400, detail='Username already exists')
     return res
 
 @account_router.post('/SignOut/', response_model=AccountPublicDto, responses={401: {"model": ErrorResponse}})
 async def SignOut(
-    account: Account = Depends(decode_jwt_token),
+    account: AccountDTO = Depends(decode_jwt_token),
     db: Session = Depends(get_db)
     ):
     return AccountPublicDto(**(await InvalidateById(db, account.id)).__dict__)

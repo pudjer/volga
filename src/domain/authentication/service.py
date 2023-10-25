@@ -4,11 +4,11 @@ from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 import jwt
 
-from ...domain.account.models.Account import Account
+from ...domain.account.dto.Account import AccountDTO
 
 
 from ...domain.account.dto.Account import AccountPublicDto
-from ...domain.account.repositories.AccountService import GetById
+from ...domain.account.service.AccountService import GetById
 from ...infrastructure.persistence.database import get_db
 from .oauth2 import oauth2_scheme
 import os
@@ -35,6 +35,13 @@ async def decode_jwt_token(token = Depends(oauth2_scheme), db: Session = Depends
         isExpired = (decodedToken['expIn'] < now)
         if isBaned or isExpired:
             raise HTTPException(status_code=401, detail="Token has expired")
-        return Account(**acc.__dict__)
+        return AccountDTO(**acc.__dict__)
     except jwt.DecodeError:
         raise HTTPException(status_code=401, detail="Token is invalid")
+
+async def decode_admin_jwt_token(token = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    res = await decode_jwt_token(token, db)
+    if res.isAdmin:
+        return res
+    else:
+        raise HTTPException(status_code=403, detail="Forbidden")

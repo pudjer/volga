@@ -1,8 +1,12 @@
 from fastapi import APIRouter, FastAPI
-from .infrastructure.persistence.database import engine, Base
+from .domain.account.service.AccountService import Create
+from .domain.account.dto.Account import AdminCreateAccountDTO
+from .infrastructure.persistence.database import engine, Base, get_db
 from .infrastructure.persistence.models import *
 from .presentation.controllers.common import *
 from .presentation.controllers.admin import *
+
+
 app = FastAPI()
 
 
@@ -17,3 +21,10 @@ router.include_router(admin_account_router, prefix="/Admin/Account")
 router.include_router(admin_rent_router, prefix="/Admin/Rent")
 router.include_router(admin_transport_router, prefix="/Admin/Transport")
 app.include_router(router, prefix='/api')
+
+#create admin account
+admin = AdminCreateAccountDTO(username="admin", password='admin', isAdmin=True, balance=0)
+try:
+    db = get_db().send(None)
+    Create(db, admin).send(None)
+except: pass
