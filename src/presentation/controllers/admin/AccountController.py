@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Annotated
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ....domain.authentication.service import decode_admin_jwt_token
 from ....domain.account.dto.Account import AccountPublicDto, AdminCreateAccountDTO, AccountDTO
@@ -15,14 +16,19 @@ class ErrorResponse(BaseModel):
 
 
 
-@admin_account_router.get('/', response_model=AccountPublicDto, responses={401: {"model": ErrorResponse}})
+@admin_account_router.get('/', response_model=List[AccountPublicDto], responses={401: {"model": ErrorResponse}})
 async def GetManyAccounts(
-    start: int = 0,
-    count: int | None = None,
+    start: Annotated[int | None, Query(ge=1)] = 0,
+    count: Annotated[int | None, Query(ge=0)] = None,
     db: Session = Depends(get_db),
     account: AccountDTO = Depends(decode_admin_jwt_token)
 ):
-    return AccountPublicDto(**(await GetSlice(db, start, count)).__dict__)
+    start-=1
+    accounts = await GetSlice(db, start, count)
+    res = []
+    for i in accounts:
+        res.append(AccountPublicDto(**(i).__dict__))
+    return res
 
 
 @admin_account_router.get('/{id}/', response_model=AccountPublicDto, responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}})

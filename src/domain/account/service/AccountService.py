@@ -1,14 +1,13 @@
 import time
 from sqlalchemy.orm import Session
 from ....domain.account.dto.Account import *
-from ....infrastructure.persistence.models.Account import AccountScheme
+from ....infrastructure.persistence.models import AccountScheme
 import bcrypt
 from .AccountErrors import *
 from typing import List
 
 
 async def Create(db: Session, credentials: AdminCreateAccountDTO | Credentials) -> AccountDTO:
-    print(credentials)
     another = db.query(AccountScheme).filter(AccountScheme.username == credentials.username).first()
     if another:
         raise UserNameUniqueError
