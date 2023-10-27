@@ -22,22 +22,19 @@ async def Create(db: Session, credentials: AdminCreateAccountDTO | Credentials) 
     db.add(acc)
     db.commit()
     db.refresh(acc)
-    res = AccountDTO(**acc.__dict__)
-    return res
+    return acc
 
 async def GetById(db: Session, id: int) -> AccountDTO :
     acc = db.query(AccountScheme).filter(AccountScheme.id == id).first()
     if acc is None:
         raise UserNotFoundError
-    res = AccountDTO(**acc.__dict__)
-    return res
+    return acc
     
 async def GetByUsername(db: Session, username: str) -> AccountDTO :
     acc = db.query(AccountScheme).filter(AccountScheme.username == username).first()
     if acc is None:
         raise UserNotFoundError
-    res = AccountDTO(**acc.__dict__)
-    return res
+    return acc
 
 async def Validate(db: Session, credentials: Credentials) -> AccountDTO :
     acc = db.query(AccountScheme).filter(AccountScheme.username == credentials.username).first()
@@ -45,17 +42,16 @@ async def Validate(db: Session, credentials: Credentials) -> AccountDTO :
         raise UserNotFoundError
     if not bcrypt.checkpw(credentials.password.encode(), acc.hashedPassword.encode()):
         raise IncorectPasswordError
-    res = AccountDTO(**acc.__dict__)
-    return res
+    return acc
 
 async def ChangeAttrsById(db: Session, id: int, attrs: AccountUpdateDto | AdminCreateAccountDTO) -> AccountDTO :
-    another = db.query(AccountScheme).filter(AccountScheme.username == attrs.username).first()
+    another = db.query(AccountScheme).filter(AccountScheme.username == attrs.username, AccountScheme.id != id).first()
     if another:
         raise UserNameUniqueError
     acc = db.query(AccountScheme).filter(AccountScheme.id == id).first()
-    for field, value in attrs.model_fields:
+    for field, value in attrs.model_dump().items():
             setattr(acc, field, value)
-    if hasattr(attrs, 'hashedPassword'):
+    if hasattr(attrs, 'password'):
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(attrs.password.encode(), salt)
         acc.hashedPassword = hashed_password.decode()
@@ -65,8 +61,7 @@ async def ChangeAttrsById(db: Session, id: int, attrs: AccountUpdateDto | AdminC
         db.rollback()
         raise e
     db.refresh(acc)
-    res = AccountDTO(**acc.__dict__)
-    return res
+    return acc
 
 async def InvalidateById(db: Session, id: int) -> AccountDTO :
     acc = db.query(AccountScheme).filter(AccountScheme.id == id).first()
@@ -77,39 +72,41 @@ async def InvalidateById(db: Session, id: int) -> AccountDTO :
         db.rollback()
         raise e
     db.refresh(acc)
-    res = AccountDTO(**acc.__dict__)
-    return res
+    return acc
 
 async def HesoyamById(db: Session, id: int) -> AccountDTO :
     acc = db.query(AccountScheme).filter(AccountScheme.id == id).first()
     if acc is None:
         raise UserNotFoundError
-    acc.balance += 250000
+    acc.balance = acc.balance + 250000
     try:
         db.commit()
     except Exception as e:
         db.rollback()
         raise e
-    res = AccountDTO(**acc.__dict__)
-    return res
+    db.refresh(acc)
+    return acc
 
 
 async def GetSlice(db: Session, start: int = 0, count: int | None = None) -> List[AccountDTO]:
+    if start < 0:
+        raise Exception('start has to be greater than 0')
     query = db.query(AccountScheme)
     if count is not None:
         query = query.slice(start, start + count)
+    else:
+        query = query.slice(start, None)
     accounts = query.all()
-    return [AccountDTO(**acc.__dict__) for acc in accounts]
+    return accounts
 
 async def DeleteById(db: Session, id: int) -> AccountDTO :
     acc = db.query(AccountScheme).filter(AccountScheme.id == id).first()
     if acc is None:
         raise UserNotFoundError
-    res = AccountDTO(**acc.__dict__)
     db.delete(acc)
     try:
         db.commit()
     except Exception as e:
         db.rollback()
         raise e
-    return res
+    return acc

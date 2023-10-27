@@ -2,6 +2,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
+
+from ...dto.Error import ErrorResponse
 from ...dto.Token import Token
 from ....domain.account.service.AccountService import ChangeAttrsById, Create, GetById, InvalidateById, Validate
 from ....domain.authentication.service import create_jwt_token, decode_jwt_token
@@ -12,8 +14,7 @@ from ....domain.account.service.AccountErrors import *
 
 account_router = APIRouter()
 
-class ErrorResponse(BaseModel):
-    detail: str
+
 
 @account_router.get('/Me/', response_model=AccountPublicDto, responses={401: {"model": ErrorResponse}})
 async def GetMe(

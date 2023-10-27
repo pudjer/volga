@@ -1,10 +1,19 @@
+from typing import List
 from sqlalchemy.orm import Session
-from .TransportErrors import TransportNotFoundError
+
+from ...account.service.AccountErrors import UserNotFoundError
+
+from ...account.service.AccountService import GetById
+from .TransportErrors import OwnerNotFoundError, TransportNotFoundError
 from ....infrastructure.persistence.models import TransportScheme
 from ...transport.dto.Transport import TransportCreateDTO, TransportDTO, TransportDTOWithoutId
 
 
 async def CreateTransport(db: Session, transport_create: TransportDTOWithoutId) -> TransportScheme:
+    try: 
+        await GetById(db, transport_create.ownerId)
+    except UserNotFoundError:
+        raise OwnerNotFoundError()
     try:
         transport = TransportScheme(**transport_create.model_dump())
         db.add(transport)
@@ -15,7 +24,11 @@ async def CreateTransport(db: Session, transport_create: TransportDTOWithoutId) 
         raise e
     return transport
 
-async def UpdateTransport(db: Session, transport: TransportCreateDTO, id: int) -> TransportScheme:
+async def UpdateTransport(db: Session, transport: TransportDTOWithoutId, id: int) -> TransportScheme:
+    try: 
+        await GetById(db, transport.ownerId)
+    except UserNotFoundError:
+        raise OwnerNotFoundError()
     transportModel = db.query(TransportScheme).filter(TransportScheme.id == id).first()
     if not transportModel:
         raise TransportNotFoundError()
@@ -37,6 +50,7 @@ async def DeleteTransport(db: Session, transport_id: int) -> TransportScheme:
         db.delete(transport)
         db.commit()
     else:
+        db.rollback()
         raise TransportNotFoundError()
     return transport
 
@@ -46,4 +60,16 @@ async def GetTransportById(db: Session, transport_id) -> TransportScheme:
     if not res:
         raise TransportNotFoundError()
     return res
+
+
+async def GetManyTransports(db: Session, start: int, count: int, type: str) -> List[TransportScheme]:
+    query = db.query(TransportScheme)
+    if type is not None:
+        query = query.filter(TransportScheme.transportType==type)
+    if count is not None:
+        query = query.slice(start, start + count)
+    else:
+        query = query.slice(start, None)
+    transports = query.all()
+    return transports
 

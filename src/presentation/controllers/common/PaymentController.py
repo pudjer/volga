@@ -17,7 +17,8 @@ async def Hesoyam(
     if (not account.isAdmin) and account.id != accountId:
         raise HTTPException(status_code=401, detail="Not authenticated")
     try: 
-        res = AccountPublicDto(**(await HesoyamById(db, accountId)).__dict__)
+        acc = await HesoyamById(db, accountId)
+        res = AccountPublicDto(**acc.__dict__)
     except UserNotFoundError:
         raise HTTPException(status_code=400, detail='Id not found')
     return res
