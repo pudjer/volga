@@ -47,7 +47,15 @@ async def SignUp(
     except UserNameUniqueError:
         raise HTTPException(status_code=400, detail='Username already exists')
 
-@account_router.put('/Update/', response_model=AccountPublicDto, responses={400: {"model": ErrorResponse}})
+@account_router.post('/SignOut/', response_model=AccountPublicDto, responses={401: {"model": ErrorResponse}})
+async def SignOut(
+    account: AccountDTO = Depends(decode_jwt_token),
+    db: Session = Depends(get_db)
+    ):
+    return AccountPublicDto(**(await InvalidateById(db, account.id)).__dict__)
+
+@account_router.put('/Update/', response_model=AccountPublicDto, responses={400: {"model": ErrorResponse},
+                                                                            401: {"model": ErrorResponse}})
 async def Update(
     credentials: AccountUpdateDto,
     account: AccountDTO = Depends(decode_jwt_token),
@@ -59,9 +67,3 @@ async def Update(
         raise HTTPException(status_code=400, detail='Username already exists')
     return res
 
-@account_router.post('/SignOut/', response_model=AccountPublicDto, responses={401: {"model": ErrorResponse}})
-async def SignOut(
-    account: AccountDTO = Depends(decode_jwt_token),
-    db: Session = Depends(get_db)
-    ):
-    return AccountPublicDto(**(await InvalidateById(db, account.id)).__dict__)

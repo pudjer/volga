@@ -4,9 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from ....domain.common.Errors import CantBeDeletedError
+
 from ...dto.Error import ErrorResponse
 from ....domain.transport.service.TransportErrors import OwnerNotFoundError, TransportNotFoundError
-from ....domain.transport.dto.Transport import TransportDTO, TransportDTOWithoutId
+from ....domain.transport.dto.Transport import TransportDTO, TransportDTOWithoutId, TransportTypeWithAll
 from ....domain.transport.service.TransportService import CreateTransport, DeleteTransport, GetManyTransports, GetTransportById, UpdateTransport
 from ....domain.account.dto.Account import AccountDTO
 from ....domain.authentication.service import decode_admin_jwt_token
@@ -16,11 +18,7 @@ from ....infrastructure.persistence.database import get_db
 admin_transport_router = APIRouter()
 
 
-class TransportType(str, Enum):
-    Car = 'Car'
-    Bike = 'Bike'
-    Scooter = 'Scooter'
-    All = 'All'
+
 
 
 @admin_transport_router.get(
@@ -36,7 +34,7 @@ class TransportType(str, Enum):
 async def GetMany(
     start: Annotated[int | None, Query(ge=1)] = 1,
     count: Annotated[int | None, Query(ge=0)] = None,
-    transportType: Annotated[TransportType, Query()] = TransportType.All,
+    transportType: Annotated[TransportTypeWithAll, Query()] = TransportTypeWithAll.All,
     db: Session = Depends(get_db),
     account: AccountDTO = Depends(decode_admin_jwt_token)
 ):
@@ -92,6 +90,7 @@ async def Add(
     response_model=TransportDTO,
     response_model_exclude_unset=True,
     responses={
+        401: {"model": ErrorResponse},
         400: {"model": ErrorResponse, "description": "Bad Request"},
         404: {"model": ErrorResponse, "description": "Transport not found"}
     },
@@ -116,7 +115,9 @@ async def Update(
     response_model=TransportDTO,
     response_model_exclude_unset=True,
     responses={
-        404: {"model": ErrorResponse, "description": "Transport not found"}
+        404: {"model": ErrorResponse, "description": "Transport not found"},
+        401: {"model": ErrorResponse},
+        400: {"model": ErrorResponse},
     },
     summary="Delete a transport by ID",
     description="Delete a transport by its ID."
@@ -130,3 +131,5 @@ async def Delete(
         return TransportDTO(**(await DeleteTransport(db, id)).__dict__)
     except TransportNotFoundError:
         raise HTTPException(status_code=404, detail='Transport not found')
+    except CantBeDeletedError as e:
+        raise HTTPException(status_code=400, detail=e.message)

@@ -45,7 +45,7 @@ async def GetManyAccounts(
     response_model=AccountPublicDto,
     responses={
         400: {"model": ErrorResponse},
-        401: {"model": ErrorResponse},
+        404: {"model": ErrorResponse},
     },
     summary="Get an account by ID",
     description="Retrieve an account by its ID.",
@@ -58,7 +58,9 @@ async def GetAccountById(
     try:
         return AccountPublicDto(**(await GetById(db, id)).__dict__)
     except UserNotFoundError:
-        raise HTTPException(status_code=400, detail='Id not found')
+        raise HTTPException(status_code=404, detail='Id not found')
+
+
 
 @admin_account_router.post(
     '/',
@@ -85,7 +87,7 @@ async def CreateAccount(
     '/{id}/',
     response_model=AccountPublicDto,
     responses={
-        400: {"model": ErrorResponse},
+        404: {"model": ErrorResponse},
         401: {"model": ErrorResponse},
     },
     summary="Update an account by ID",
@@ -108,7 +110,7 @@ async def UpdateAccount(
     '/{id}/',
     response_model=AccountPublicDto,
     responses={
-        400: {"model": ErrorResponse},
+        404: {"model": ErrorResponse},
         401: {"model": ErrorResponse},
     },
     summary="Delete an account by ID",
@@ -123,3 +125,5 @@ async def DeleteAccount(
         return AccountPublicDto(**(await DeleteById(db, id)).__dict__)
     except UserNotFoundError:
         raise HTTPException(status_code=400, detail='Id not found')
+    except CantBeDeletedError as e:
+        raise HTTPException(status_code=400, detail=e.message)
